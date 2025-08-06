@@ -1,0 +1,100 @@
+{%- doc -%}
+  Renders a carousel of blog articles
+
+  @param {string} ref - The ref of the slideshow
+  @param {object} slides - An array of blog articles to display in the carousel
+  @param {number} slide_count - The number of slides to display in the carousel
+  @param {object} settings - The section settings containing display options
+  @param {string} [slide_width_max] - The maximum width of the slides in the carousel.
+
+  @example
+  {% render 'amb-featured-blog-carousel',
+    ref: 'featured-blog',
+    slides: blog_articles,
+    slide_count: posts_displayed,
+    settings: section.settings,
+    slide_width_max: '450px'
+  %}
+{%- enddoc -%}
+
+{%- style -%}
+.featured-blog-list__carousel {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.featured-blog-list__slide {
+  padding: 0 var(--gutter-slide-width, 0);
+  width: var(--slide-width-max);
+  flex: 0 0 auto;
+}
+
+.featured-blog-list__carousel .blog-item {
+  height: 100%;
+}
+
+@media screen and (max-width: 749px) {
+  .featured-blog-list__carousel {
+    margin: 0 calc(-1 * var(--gutter-slide-width, 0));
+    width: calc(100% + (2 * var(--gutter-slide-width, 0)));
+  }
+}
+
+{%- endstyle -%}
+
+{% liquid
+  assign slideshow_ref = ref | default: 'resourceListCarousel'
+  if settings.section_width == 'page-width'
+    assign slideshow_gutters = 'start end'
+  else
+    assign slideshow_gutters = null
+  endif
+%}
+
+{% capture slides %}
+  {% for item in slides limit: slides.size %}
+    <slideshow-slide
+        ref="slides[]"
+        aria-hidden="{% if forloop.index0 == 1 %}false{% else %}true{% endif %}"
+        class="featured-blog-list__slide"
+        style="view-timeline-name: --slide-{{ forloop.index0 }};"
+        {% if item.id %}slide-id="{{ item.id }}"{% endif %}
+      >
+      <div class="featured-blog-list__item">
+        {% render 'amb-feature-blog-item',
+          article: item,
+          settings: settings
+        %}
+      </div>
+    </slideshow-slide>
+  {% endfor %}
+{% endcapture %}
+
+{% capture slideshow_arrows %}
+  {% render 'slideshow-arrows', icon_style: settings.icons_style, icon_shape: settings.icons_shape %}
+{% endcapture %}
+
+<div
+  class="featured-blog-list__carousel"
+  style="
+    {% if settings.section_width == 'page-width' %}
+      --gutter-slide-width: var(--util-page-margin-offset);
+    {% elsif settings.section_width == 'full-width' %}
+      --gutter-slide-width: 0px;
+    {% endif %}
+    --slide-width-max: {{ slide_width_max | default: '300px' }};
+  "
+>
+  {% render 'slideshow',
+    ref: slideshow_ref,
+    class: 'featured-blog-list__slideshow',
+    slides: slides,
+    slideshow_arrows: slideshow_arrows,
+    auto_hide_controls: false,
+    infinite: false,
+    initial_slide: 0,
+    slide_count: slide_count,
+    slideshow_gutters: slideshow_gutters
+  %}
+</div>

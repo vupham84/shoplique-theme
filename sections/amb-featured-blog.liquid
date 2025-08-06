@@ -1,0 +1,275 @@
+{%- style -%}
+.featured-blog-list {
+  display: grid;
+  grid-template-columns: repeat({{ section.settings.columns_desktop }}, 1fr);
+  column-gap: 8px;
+  row-gap: 20px;
+}
+
+@media screen and (max-width: 749px) {
+  .featured-blog-list:not(.featured-blog-list__carousel) {
+    grid-template-columns: repeat({{ section.settings.mobile_columns }}, 1fr);
+  }
+}
+
+.hidden--desktop {
+  display: none;
+}
+
+@media screen and (max-width: 749px) {
+  .hidden--mobile {
+    display: none;
+  }
+  .hidden--desktop {
+    display: block;
+  }
+}
+
+.featured-blog-section {
+  margin: 0 auto;
+}
+
+.blog__view-all {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.blog__view-all a {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+/* Carousel Layout */
+.featured-blog-list__carousel {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.featured-blog-list__slideshow {
+  width: 100%;
+  display: flex;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.featured-blog-list__slide {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: calc(var(--slide-width-max, 450px));
+  padding: 0 var(--gutter-slide-width, 20px);
+  position: relative;
+}
+
+.featured-blog-list__slide .blog-card {
+  height: 100%;
+  margin: 0;
+}
+
+.featured-blog-list__slide .blog-card__image-wrapper {
+  width: 100%;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Item Styles */
+.featured-blog-list__item {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+@media screen and (max-width: 749px) {
+  .featured-blog-list__carousel {
+    margin: 0 -20px;
+    width: calc(100% + 40px);
+  }
+
+  .featured-blog-list__slide {
+    width: 85vw;
+    max-width: 450px;
+    margin-right: 20px;
+  }
+
+  .featured-blog-list__slide:last-child {
+    margin-right: 0;
+  }
+}
+{%- endstyle -%}
+
+{%- liquid
+  if section.settings.blog != blank
+    assign blog_articles = section.settings.blog.articles
+    assign posts_displayed = section.settings.post_limit
+    if posts_displayed > blog_articles.size
+      assign posts_displayed = blog_articles.size
+    endif
+    assign displayed_articles = blog_articles | slice: 0, posts_displayed
+  endif
+
+  if section.settings.mobile_columns == '1'
+    assign mobile_max_width = '100%'
+  else
+    assign mobile_max_width = '50%'
+  endif
+-%}
+<div
+  class="
+    featured-blog-section
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    section-resource-list
+    spacing-style
+    gap-style
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  {%- content_for 'blocks' -%}
+  <div class="color-{{ section.settings.color_scheme }} gradient{% if section.settings.heading == blank %} no-heading{% endif %}">
+    {% if section.settings.blog != blank %}
+      <div class="featured-blog-list {% if section.settings.carousel_on_mobile %}hidden--mobile{% endif %}">
+        {% for article in displayed_articles %}
+          <div class="featured-blog-list__item">
+            {% render 'amb-feature-blog-item',
+              article: article,
+              settings: section.settings
+            %}
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if section.settings.carousel_on_mobile %}
+        <div class="featured-blog-list hidden--desktop featured-blog-list__carousel" style="--slide-width-max: 450px;">
+          {% render 'amb-featured-blog-carousel',
+            ref: 'featured-blog',
+            slides: displayed_articles,
+            slide_count: posts_displayed,
+            settings: section.settings,
+            slide_width_max: mobile_max_width
+          %}
+        </div>
+      {% endif %}
+
+      {% if section.settings.show_view_all %}
+        <div class="blog__view-all center">
+          <a href="{{ section.settings.blog.url }}" class="button">
+            {{ section.settings.view_all_text }}
+          </a>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.featured-blog.name",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "text"
+    },
+    {
+      "type": "group"
+    },
+    {
+      "type": "spacer"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "blog",
+      "id": "blog",
+      "label": "t:sections.featured-blog.settings.blog.label"
+    },
+    {
+      "type": "range",
+      "id": "post_limit",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "label": "t:sections.featured-blog.settings.post_limit.label"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "label": "t:sections.featured-blog.settings.columns_desktop.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "info": "t:sections.all.colors.has_cards_info",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_image",
+      "default": true,
+      "label": "t:sections.featured-blog.settings.show_image.label",
+      "info": "t:sections.featured-blog.settings.show_image.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "default": true,
+      "label": "t:sections.featured-blog.settings.show_date.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_author",
+      "default": false,
+      "label": "t:sections.featured-blog.settings.show_author.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "default": true,
+      "label": "t:sections.featured-blog.settings.show_view_all.label"
+    },
+    {
+      "type": "text",
+      "id": "view_all_text",
+      "label": "View all button text",
+      "default": "t:sections.featured-blog.settings.view_all_text.default"
+    },
+    {
+      "type": "checkbox",
+      "id": "carousel_on_mobile",
+      "label": "Show as slider on mobile",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "mobile_columns",
+      "label": "Mobile columns",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "1"
+    },
+  ],
+  "presets": [
+    {
+      "name": "t:sections.featured-blog.presets.name"
+    }
+  ]
+}
+{% endschema %}

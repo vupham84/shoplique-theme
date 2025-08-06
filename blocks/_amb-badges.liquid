@@ -1,0 +1,61 @@
+{% assign product = closest.product %}
+
+{% if product != blank %}
+  {% liquid
+    assign badges = shop.metaobjects.badge.values
+    assign system_badges = badges | map: 'system'
+
+    if product
+      assign product_badges = product.metafields.custom.amb_badges.value
+      assign product_collections = product.collections
+    endif
+
+    unless product_badges
+      assign product_badges = '' | split: ''
+    endunless
+
+    for collection in product_collections
+      for badge in badges
+        if collection.handle contains badge.system.handle
+          assign badge_arr = badges | where: 'system', badge.system
+          assign product_badges = product_badges | concat: badge_arr
+        endif
+      endfor
+    endfor
+
+    if product.available == false
+      assign system_badge = system_badges | where: 'handle', 'sold-out' | first
+      assign badge_arr = badges | where: 'system', system_badge
+
+      assign product_badges = product_badges | concat: badge_arr
+    elsif product.compare_at_price > product.price
+      assign system_badge = system_badges | where: 'handle', 'sale' | first
+      assign badge_arr = badges | where: 'system', system_badge
+
+      assign product_badges = product_badges | concat: badge_arr
+    endif
+
+    assign product_badges = product_badges | uniq | sort_natural: 'priority'
+  %}
+
+    {% if product_badges %}
+      {% render 'amb-badges',
+      badge_list: product_badges,
+      section_id: section.id,
+      card_product: product
+      %}
+    {% endif %}
+
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:names.product_badges",
+  "settings": [],
+  "presets": [
+    {
+      "name": "t:names.product_badges"
+    }
+  ]
+}
+{% endschema %}

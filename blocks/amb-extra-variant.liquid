@@ -1,0 +1,95 @@
+{% comment %} Display non-swatch variants in format "variant count + variant name" (e.g., 3 Sizes) {% endcomment %}
+{% liquid
+  # Get the product resource - either from current product or closest product context
+  assign product_resource = product | default: closest.product
+%}
+
+{% liquid
+  # Initialize variables to store non-swatch options information
+  assign non_swatch_options = ''
+  assign non_swatch_options_count = 0
+  assign label = ''
+
+  # Check if product exists and has options with values
+  if product_resource and product_resource.options_with_values
+    # Reset variables for this product
+    assign non_swatch_options = ''
+    assign non_swatch_options_count = 0
+
+    # Always use the first variant (master product) instead of selected variant
+    assign master_variant = product_resource.variants.first
+
+    # Loop through each product option to find non-swatch options
+    for option in product_resource.options_with_values
+      # Count how many values in this option have swatches
+      assign swatch_count = option.values | map: 'swatch' | compact | size
+
+      # If no swatches found, this is a non-swatch option
+      if swatch_count == 0
+        # Count unique values for this option
+        assign unique_values_count = option.values.size
+
+        # Add option name and count to our list
+        assign non_swatch_options = non_swatch_options | append: option.name | append: ':' | append: unique_values_count | append: '||'
+        assign non_swatch_options_count = non_swatch_options_count | plus: 1
+      endif
+    endfor
+
+    # If we found non-swatch options, create the display label
+    if non_swatch_options_count > 0
+      # Remove the trailing || and split the options string
+      assign clean_options = non_swatch_options | replace: '||', '|' | split: '|'
+
+      # Create label based on number of options
+      if non_swatch_options_count == 1
+        # Single option - format: "3 Sizes" or "1 Size"
+        assign option_info = clean_options[0] | split: ':'
+        assign option_name = option_info[0]
+        assign option_count = option_info[1] | plus: 0
+        # Add "s" if count > 1
+        if option_count > 1
+          assign option_name = option_name | append: 's'
+        endif
+        assign label = option_count | append: ' ' | append: option_name
+      else
+        # Multiple options - join them with commas
+        assign label = ''
+        for option_data in clean_options
+          assign option_info = option_data | split: ':'
+          assign option_name = option_info[0]
+          assign option_count = option_info[1] | plus: 0
+          # Add "s" if count > 1
+          if option_count > 1
+            assign option_name = option_name | append: 's'
+          endif
+          assign option_label = option_count | append: ' ' | append: option_name
+          if label == ''
+            assign label = option_label
+          else
+            assign label = label | append: ', ' | append: option_label
+          endif
+        endfor
+      endif
+    endif
+  endif
+%}
+
+{% comment %} Display the non-swatch options information if any found {% endcomment %}
+{% if non_swatch_options_count > 0 %}
+  <div class="extra-variant-info">
+    {{ label }}
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Extra Variant",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Extra Variant",
+      "category": "t:categories.product"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,47 @@
+{%- doc -%}
+  Renders a product promotion callout.
+
+  @param {string} callout - The promotion text to display.
+  @param {string} [callout_color] - CSS color value for the callout text.
+  @param {image} [icon] - Image object for the promotion icon.
+
+  @example
+    {% render 'amb-product-promotion-callout-snippet',
+      callout: <promotion_text>,
+      callout_color: <color_value>,
+      icon: <image_object>
+    %}
+{%- enddoc -%}
+
+{% stylesheet %}
+.product-promotion-callout__wrapper{
+  display: flex;
+  align-items: flex-start;
+  flex-direction: row;
+}
+.product-promotion__image {
+  max-width: 20px;
+  margin-right: 8px;
+}
+{% endstylesheet %}
+
+{% if callout %}
+  <div
+      class="product-promotion-callout__wrapper"
+      {% if callout_color %}
+        style="color: {{ callout_color }};"
+      {% endif %}
+    >
+      {% if icon %}
+        {% render 'image',
+          image: icon,
+          class: 'product-promotion__image',
+          height: '16',
+          text_fallback: 'promotion icon'
+        %}
+      {% endif %}
+      <div class="product-promotion-callout__content">
+        {{ callout }}
+      </div>
+  </div>
+{% endif %}

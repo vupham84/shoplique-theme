@@ -1,0 +1,33 @@
+.product-labels-outer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    left: 0;
+    max-width: 100%;
+    max-width: calc(100% - 40px);
+    margin: 0;
+    position: absolute;
+    z-index: 10;
+    padding: 5px;
+}
+
+.product-labels-outer.top {
+    top: 0;
+}
+
+.product-labels-outer.bottom {
+    bottom: 0;
+}
+
+.product-label {
+    align-items: center;
+    display: flex;
+    font-size: 10px;
+    justify-content: center;
+    padding: 5px 10px;
+    text-transform: capitalize;
+}
+
+.product-grid__card {
+    position: relative;
+}

@@ -1,0 +1,22 @@
+{{ 'amb-badge.css' | asset_url | stylesheet_tag }}
+
+<ul class="product-labels-outer {{ settings.badges_position }}">
+  {% for badge in badge_list limit: settings.number_badge %}
+    <li
+      {% if badge.name == 'New' %}
+        id="NoMediaStandardNewBadge-{{ section_id }}-{{ card_product.id }}"
+      {% else %}
+        id="NoMediaStandardBadge-{{ section_id }}-{{ card_product.id }}"
+      {% endif %}
+      aria-live="polite"
+      class="product-label"
+      style="
+      background-color: {{ badge.background }};
+      color: {{ badge.colour }};
+      order: {{ badge.priority }}
+      "
+    >
+      {{- badge.name -}}
+    </li>
+  {% endfor %}
+</ul>

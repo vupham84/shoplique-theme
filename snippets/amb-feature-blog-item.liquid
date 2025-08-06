@@ -1,0 +1,94 @@
+{%- doc -%}
+  Renders a blog card item
+
+  @param {object} article - The article object to display
+  @param {object} settings - The block or sections settings from the parent block/section.
+
+  @example
+  {% render 'amb-feature-blog-item', article: article, settings: section.settings %}
+{%- enddoc -%}
+
+
+{% stylesheet %}
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--gradient-background);
+  border-radius: var(--card-corner-radius);
+  overflow: hidden;
+}
+
+.blog-card__image-wrapper {
+  aspect-ratio: 16/9;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.blog-card__image {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.blog-card__content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.blog-card__title {
+  margin: 0;
+  font-size: calc(var(--font-heading-scale) * 1.6rem);
+  text-transform: uppercase;
+}
+
+.blog-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-card__title a:hover {
+  text-decoration: underline;
+}
+
+.blog-card__date,
+.blog-card__author {
+  color: rgba(var(--color-foreground), 0.75);
+  font-size: .85rem;
+  line-height: calc(1 + 0.5 / var(--font-body-scale));
+}
+{% endstylesheet %}
+
+<article class="blog-item blog-card">
+  {% if settings.show_image and article.image %}
+    <div class="blog-card__image-wrapper">
+      <img
+        srcset="{{ article.image | image_url: width: 400 }} 400w,
+                {{ article.image | image_url: width: 600 }} 600w"
+        src="{{ article.image | image_url: width: 400 }}"
+        alt="{{ article.image.alt | escape }}"
+        width="{{ article.image.width }}"
+        height="{{ article.image.height }}"
+        loading="lazy"
+        class="blog-card__image"
+      >
+    </div>
+  {% endif %}
+  
+  <div class="blog-card__content">
+    <h3 class="blog-card__title">
+      <a href="{{ article.url }}">{{ article.title }}</a>
+    </h3>
+
+    {% if settings.show_date %}
+      <span class="blog-card__date">{{ article.published_at | time_tag: format: 'date' }}</span>
+    {% endif %}
+
+    {% if settings.show_author %}
+      <span class="blog-card__author">{{ article.author }}</span>
+    {% endif %}
+  </div>
+</article>

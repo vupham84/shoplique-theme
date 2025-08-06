@@ -1,0 +1,9 @@
+**/*.json
+.shopify
+shopify.theme.toml
+
+!.prettierrc.json
+!assets/*.json
+!config/settings_schema.json
+!locales/*.default.json
+!locales/*.default.schema.json

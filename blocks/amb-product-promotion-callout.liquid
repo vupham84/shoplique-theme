@@ -1,0 +1,95 @@
+{%- doc -%}
+  @param {object} [variant] - The variant object
+{%- enddoc -%}
+
+{% assign product_obj = closest.product %}
+
+{% if product_obj != blank %}
+  {% liquid
+    assign product = product_obj
+    assign current_variant = variant
+    assign collections = product.collections
+
+    assign promotion = null
+    assign promotion_color = null
+    assign promotion_icon = null
+
+    # If no variant is passed, use the default variant
+    if current_variant == blank
+      assign current_variant = product.selected_or_first_available_variant
+    endif
+
+    # Step 1: Check promotion from current variant (highest priority)
+    assign promotion = current_variant.metafields.amb.promotion_callout
+    assign promotion_color = current_variant.metafields.amb.promotion_color
+    assign promotion_icon = current_variant.metafields.amb.promotion_icon
+
+    # Step 2: If variant has no promotion, check at product level
+    if promotion == blank
+      assign promotion = product.metafields.amb.promotion_callout
+      assign promotion_color = product.metafields.amb.promotion_color
+      assign promotion_icon = product.metafields.amb.promotion_icon
+    endif
+
+    # Step 3: If product also has no promotion, check collections (lowest priority)
+    if promotion == blank
+      for collection in collections
+        if collection.metafields.amb.promotion_callout
+          assign promotion = collection.metafields.amb.promotion_callout
+          assign promotion_color = collection.metafields.amb.promotion_color
+          assign promotion_icon = collection.metafields.amb.promotion_icon
+        endif
+      endfor
+    endif
+  %}
+
+  {% if promotion != blank %}
+    {% assign variant = product.selected_or_first_available_variant %}
+    {% if promotion %}
+      <div class="product-promotion-callout" style="width:100%;">
+        {% render 'amb-product-promotion-callout-snippet',
+          callout: promotion,
+          callout_color: promotion_color,
+          icon: promotion_icon
+        %}
+      </div>
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product Promotion Callout",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:content.resource_reference_product_title"
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit"
+        },
+        {
+          "value": "100%",
+          "label": "t:options.fill"
+        }
+      ],
+      "default": "fit-content"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Promotion Callout"
+    }
+  ]
+}
+{% endschema %}

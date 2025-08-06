@@ -1,0 +1,282 @@
+{% assign sitemap_block_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .sitemap-{{ sitemap_block_id }} {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: {{ block.settings.section_padding }}px 0;
+    color: {{ block.settings.color_scheme.settings.foreground }};
+  }
+
+  .sitemap-container-{{ sitemap_block_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: {{ block.settings.column_spacing }}px;
+    width: 100%;
+  }
+
+  .sitemap-column-{{ sitemap_block_id }} {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sitemap-heading-{{ sitemap_block_id }} {
+    font-size: {{ block.settings.heading_size }}px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: {{ block.settings.heading_spacing }}px;
+    color: {{ block.settings.color_scheme.settings.foreground_heading }};
+  }
+
+  .sitemap-list-{{ sitemap_block_id }} {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sitemap-list-item-{{ sitemap_block_id }} {
+    margin-bottom: {{ block.settings.item_spacing }}px;
+  }
+
+  .sitemap-link-{{ sitemap_block_id }} {
+    font-size: {{ block.settings.text_size }}px;
+    color: {{ block.settings.color_scheme.settings.foreground }};
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: inline-block;
+  }
+
+  .sitemap-link-{{ sitemap_block_id }}:hover {
+    color: {{ block.settings.color_scheme.settings.primary }};
+  }
+
+  @media screen and (min-width: 750px) {
+    .sitemap-container-{{ sitemap_block_id }} {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .sitemap-column-{{ sitemap_block_id }} {
+      flex: 0 0 calc(50% - ({{ block.settings.column_spacing }}px / 2));
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .sitemap-column-{{ sitemap_block_id }} {
+      flex: 0 0 calc(33.333% - ({{ block.settings.column_spacing }}px * 2 / 3));
+    }
+  }
+{% endstyle %}
+
+<div class="sitemap-{{ sitemap_block_id }} color-{{ block.settings.color_scheme }}" {{ block.shopify_attributes }}>
+  <div class="sitemap-container-{{ sitemap_block_id }}">
+    <!-- Collections Column -->
+    <div class="sitemap-column-{{ sitemap_block_id }}">
+      <h2 class="sitemap-heading-{{ sitemap_block_id }}">{{ block.settings.collections_heading }}</h2>
+      <ul class="sitemap-list-{{ sitemap_block_id }}">
+        {% for collection in collections %}
+          {% if collection.handle != 'all' and collection.products_count > 0 %}
+            <li class="sitemap-list-item-{{ sitemap_block_id }}">
+              <a href="{{ collection.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+                {{ collection.title }}
+              </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Blogs Column -->
+    <div class="sitemap-column-{{ sitemap_block_id }}">
+      <h2 class="sitemap-heading-{{ sitemap_block_id }}">{{ block.settings.blogs_heading }}</h2>
+      <ul class="sitemap-list-{{ sitemap_block_id }}">
+        {% for article in blogs.news.articles limit: block.settings.blog_posts_limit %}
+          <li class="sitemap-list-item-{{ sitemap_block_id }}">
+            <a href="{{ article.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+              {{ article.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Policies Column -->
+    <div class="sitemap-column-{{ sitemap_block_id }}">
+      <h2 class="sitemap-heading-{{ sitemap_block_id }}">{{ block.settings.policies_heading }}</h2>
+      <ul class="sitemap-list-{{ sitemap_block_id }}">
+        {% if shop.privacy_policy %}
+          <li class="sitemap-list-item-{{ sitemap_block_id }}">
+            <a href="{{ shop.privacy_policy.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+              {{ shop.privacy_policy.title }}
+            </a>
+          </li>
+        {% endif %}
+        {% if shop.refund_policy %}
+          <li class="sitemap-list-item-{{ sitemap_block_id }}">
+            <a href="{{ shop.refund_policy.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+              {{ shop.refund_policy.title }}
+            </a>
+          </li>
+        {% endif %}
+        
+        {% if shop.shipping_policy %}
+          <li class="sitemap-list-item-{{ sitemap_block_id }}">
+            <a href="{{ shop.shipping_policy.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+              {{ shop.shipping_policy.title }}
+            </a>
+          </li>
+        {% endif %}
+        
+        {% if shop.terms_of_service %}
+          <li class="sitemap-list-item-{{ sitemap_block_id }}">
+            <a href="{{ shop.terms_of_service.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+              {{ shop.terms_of_service.title }}
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <!-- Pages Column -->
+    <div class="sitemap-column-{{ sitemap_block_id }}">
+      <h2 class="sitemap-heading-{{ sitemap_block_id }}">{{ block.settings.pages_heading }}</h2>
+      <ul class="sitemap-list-{{ sitemap_block_id }}">
+        {% for page in pages %}
+          {% unless page.handle contains 'policy' %}
+            <li class="sitemap-list-item-{{ sitemap_block_id }}">
+              <a href="{{ page.url }}" class="sitemap-link-{{ sitemap_block_id }}">
+                {{ page.title }}
+              </a>
+            </li>
+          {% endunless %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sitemap",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "collections_heading",
+      "label": "Collections heading",
+      "default": "Collections"
+    },
+    {
+      "type": "text",
+      "id": "blogs_heading",
+      "label": "Blogs heading",
+      "default": "Latest Posts"
+    },
+    {
+      "type": "text",
+      "id": "policies_heading",
+      "label": "Policies heading",
+      "default": "Policies"
+    },
+    {
+      "type": "text",
+      "id": "pages_heading",
+      "label": "Pages heading",
+      "default": "Pages"
+    },
+    {
+      "type": "range",
+      "id": "blog_posts_limit",
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "label": "Number of blog posts",
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 20,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "column_spacing",
+      "min": 16,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Column spacing",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "heading_spacing",
+      "min": 8,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Heading bottom spacing",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "item_spacing",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Item spacing",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 14,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Heading size",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Text size",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sitemap"
+    }
+  ]
+}
+{% endschema %}

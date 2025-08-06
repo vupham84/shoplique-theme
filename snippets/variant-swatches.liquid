@@ -1,0 +1,136 @@
+{%- doc -%}
+  Renders a swatches variant picker with limited display functionality.
+  Shows only a specified number of swatches and displays a "more" link for additional options.
+
+  @param {object} product_resource - The product object, which contains variants and options.
+  @param {number} [limit_swatches_show] - The maximum number of swatches to show before showing "more" text.
+  @param {boolean} [disable_click] - Whether to disable click events on swatches.
+
+  @example
+  {% render 'variant-swatches', product_resource: product, limit_swatches_show: 4 %}
+{%- enddoc -%}
+
+<swatches-variant-picker-component
+  data-product-id="{{ product_resource.id }}"
+  data-product-url="{{ product_resource.url }}"
+  data-limit-swatches-show="{{ limit_swatches_show | default: 4 }}"
+  {% if disable_click %}data-disable-click="true"{% endif %}
+  ref="swatchesVariantPicker"
+>
+  <form>
+    {%- for product_option in product_resource.options_with_values -%}
+      {%- liquid
+        # Count the number of swatches available for this option
+        assign swatch_count = product_option.values | map: 'swatch' | compact | size
+      -%}
+
+      {% if swatch_count == 0 %}
+        {% continue %}
+      {% endif %}
+
+      <fieldset class="variant-option variant-option--buttons variant-option--swatches">
+        <legend class="visually-hidden">{{ product_option.name }}</legend>
+
+        {% liquid
+          # Calculate how many swatches to show based on limit setting
+          assign min_items = limit_swatches_show | default: 4
+          if min_items == blank or min_items < 0
+            assign min_items = 4
+          endif
+
+          # Handle special case when limit is 0 (show only "more" button)
+          if min_items == 0
+            assign min_items = 0
+            assign show_swatches = false
+            assign remaining_count = swatch_count
+          else
+            assign show_swatches = true
+          endif
+
+          # Ensure we don't try to show more swatches than available
+          if min_items > swatch_count
+            assign min_items = swatch_count
+          endif
+
+          # Get the swatches to display and calculate remaining count
+          assign swatches_to_show = product_option.values | slice: 0, min_items
+          if show_swatches
+            assign remaining_count = swatch_count | minus: min_items
+            if remaining_count < 0
+              assign remaining_count = 0
+            endif
+          endif
+        %}
+
+        {% if show_swatches or remaining_count > 0 %}
+          <ul class="swatches-list">
+            {% if show_swatches %}
+              {%- for product_option_value in swatches_to_show -%}
+                {% liquid
+                  # Get featured media for the variant
+                  assign featured_media = product_option_value.variant.featured_media
+
+                  # If the variant has no featured media, and we have a combined listing product,
+                  # then fall back to using the featured media of the child product that is linked to this option value.
+                  if featured_media == blank and product_option_value.product_url
+                    assign featured_media = product_option_value.variant.product.featured_media
+                  endif
+                %}
+
+                <li class="variant-option__swatch">
+                  <label
+                    data-media-id="{{ featured_media.id }}"
+                    class="variant-option__button-label variant-option__button-label--has-swatch"
+                    on:pointerenter="product-card/previewVariant/{{ featured_media.id }}"
+                    on:pointerleave="product-card/resetVariant"
+                  >
+                    <input
+                      type="radio"
+                      name="{{ product_option.name | escape }}-{{ product_resource.id }}-swatch"
+                      value="{{ product_option_value | escape }}"
+                      aria-label="{{ product_option_value.name }}"
+                      data-input-id="{{ product_option.position }}-{{ forloop.index0 }}"
+                      data-option-media-id="{{ featured_media.id }}"
+                      data-option-value-id="{{ product_option_value.id }}"
+                      data-option-available="{{ product_option_value.available }}"
+                      data-connected-product-url="{{ product_option_value.product_url }}"
+                      {% if product_option_value.variant.id %}
+                        data-variant-id="{{ product_option_value.variant.id }}"
+                      {% endif %}
+                      {% if product_option_value.selected %}
+                        checked
+                      {% endif %}
+                    >
+                    {% render 'swatch', swatch: product_option_value.swatch, variant_image: featured_media %}
+                    {% render 'strikethrough-variant', product_option: product_option_value %}
+                  </label>
+                </li>
+              {%- endfor -%}
+            {% endif %}
+
+            {% if remaining_count > 0 %}
+              {% liquid
+                # Get the selected variant URL for the "more" link
+                assign selected_variant = product_resource.selected_or_first_available_variant
+              %}
+              <li class="variant-option__swatch">
+                <a
+                  href="{{ selected_variant.url }}"
+                  class="variant-option__button-label--more"
+                  aria-label="{{ 'actions.show_all_options' | t }}"
+                >
+                  <span class="more-swatches__count"> +{{ remaining_count }} more {{ product_option.name }} </span>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        {% endif %}
+      </fieldset>
+    {%- endfor -%}
+
+    <!-- Store selected variant data for JavaScript access -->
+    <script type="application/json">
+      {{ product_resource.selected_or_first_available_variant | json }}
+    </script>
+  </form>
+</swatches-variant-picker-component>

@@ -1,0 +1,221 @@
+{%- doc -%}
+  Renders mega menu list markup and optional featured content.
+  When migrating from Dawn, ensure all class names and logic match Horizon conventions.
+  Adds metafield-based content logic for custom images, text, disabling links, and content display.
+
+  @param {object} parent_link - The linklist to render.
+  @param {string} id - Unique ID to assign to the `<ul>` element.
+  @param {number} [image_border_radius] - Border radius for content images.
+
+  @example
+  {% render 'amb-mega-menu', parent_link: link, id: 'MegaMenuList-1' %}
+{%- enddoc -%}
+
+<ul
+  data-menu-list-id="{{ id }}"
+  class="mega-menu__list list-unstyled"
+  style="--menu-image-border-radius: {{ image_border_radius }}px;"
+>
+  {% for link in parent_link.links %}
+    {% liquid
+      assign second_level_collection = link.object
+      assign disable_link = false
+      assign show_content_on_mega_menu = false
+      assign content_text = second_level_collection.metafields.amb.mega_menu_text | escape | default: link.title
+      assign content_text_position = second_level_collection.metafields.amb.mega_menu_text_position | escape | downcase
+      assign content_text_color = second_level_collection.metafields.amb.mega_menu_text_color | escape | downcase
+      assign child_is_article = false
+
+      if link.object.object_type == 'article'
+        assign child_is_article = true
+        assign content_text = second_level_collection.metafields.amb.mega_menu_label | escape
+      endif
+
+      if second_level_collection.metafields.amb.show_content_on_mega_menu != blank
+        assign show_content_on_mega_menu = second_level_collection.metafields.amb.show_content_on_mega_menu
+      endif
+
+      if child_is_article
+        assign show_content_on_mega_menu = true
+      endif
+
+      if second_level_collection.metafields.amb.disable_link != blank
+        assign disable_link = second_level_collection.metafields.amb.disable_link
+      endif
+
+      if show_content_on_mega_menu
+        assign content_img = second_level_collection.metafields.amb.mega_menu_image
+        assign disable_link = false
+        if child_is_article
+          assign content_img = second_level_collection.image
+        endif
+      endif
+
+      if show_content_on_mega_menu and content_img != blank
+        assign show_content_on_mega_menu = true
+      endif
+
+      assign second_level_class = 'mega-menu__link mega-menu__link--level-2 link'
+      if link.current
+        assign second_level_class = second_level_class | append: ' mega-menu__link--active'
+      endif
+      if show_content_on_mega_menu
+        assign second_level_class = second_level_class | append: ' mega-menu__link__content'
+        if content_text_position == 'on top'
+          assign second_level_class = second_level_class | append: ' mega-menu__link__content--top'
+        endif
+        if content_text_color == 'light'
+          assign second_level_class = second_level_class | append: ' mega-menu__link__content--light'
+        endif
+      endif
+    %}
+    <li>
+      {% if disable_link %}
+        <p class="{{ second_level_class }}">{{ link.title | escape }}</p>
+      {% else %}
+        <a
+          id="MegaMenu-{{ link.handle }}"
+          href="{{ link.url }}"
+          class="{{ second_level_class }}{% if show_content_on_mega_menu %} mega-menu__content-block{% endif %}"
+          {% if link.current %}
+            aria-current="page"
+          {% endif %}
+        >
+          {% if show_content_on_mega_menu %}
+            <img
+              srcset="{{ content_img | image_url }}"
+              src="{{ content_img | image_url: width: 300 }}"
+              width="100%"
+              height="auto"
+              class="mega__content__image"
+            >
+            <span class="mega__content__text">{{ content_text }}</span>
+          {% else %}
+            {{ link.title | escape }}
+          {% endif %}
+        </a>
+      {% endif %}
+
+      {%- if show_content_on_mega_menu == false and link.links != blank -%}
+        <ul class="list-unstyled" role="list">
+          {% for grandchildlink in link.links %}
+            {% liquid
+              assign third_level_collection = grandchildlink.object
+              assign link_icon = third_level_collection.metafields.amb.collection_icon
+            %}
+            <li>
+              <a
+                id="MegaMenu-{{ link.handle }}-{{ grandchildlink.handle }}"
+                href="{{ grandchildlink.url }}"
+                class="mega-menu__link link{% if grandchildlink.current %} mega-menu__link--active{% endif %}"
+                {% if grandchildlink.current %}
+                  aria-current="page"
+                {% endif %}
+              >
+                {% if link_icon != blank %}
+                  <img
+                    srcset="{{ link_icon | image_url }}"
+                    src="{{ link_icon | image_url: width: 50 }}"
+                    width="32"
+                    height="32"
+                    class="mega-menu__link__icon"
+                  >
+                {% endif %}
+                {{ grandchildlink.title | escape }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {%- endif -%}
+    </li>
+  {% endfor %}
+</ul>
+<style>
+  .mega-menu__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 2rem;
+    max-width: 100%;
+  }
+  .mega-menu__list > li {
+    min-width: 0;
+  }
+  .mega__content__image {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .mega__content__text {
+    text-align: center;
+  }
+  .mega-menu__link--level-2 {
+    font-weight: bold;
+    text-align: left;
+  }
+  .mega-menu__list a:hover,
+  .mega-menu__list a:focus {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+  }
+  .mega-menu__link--level-2,
+  .mega-menu__link--level-2:where(a),
+  .mega-menu__link--level-2:where(p) {
+    margin-bottom: 0.5em;
+    margin-top: 0;
+    padding: 0;
+    display: block;
+  }
+  .mega-menu__link__content--top:hover .mega__content__text,
+  .mega-menu__link__content--top:focus .mega__content__text {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+  }
+  .mega-menu__link--level-2.mega-menu__content-block {
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+  .mega-menu__link__content--top .mega__content__text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .mega-menu__link__content--light .mega__content__text {
+    color: #fff;
+  }
+  .mega-menu__link__content--dark .mega__content__text {
+    color: #222;
+  }
+  .mega-menu__link__icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+  }
+  .mega-menu__link {
+    text-align: left;
+  }
+  .mega-menu__list,
+  .mega-menu__list > li,
+  .mega-menu__link,
+  .mega-menu__link--level-2 {
+    transition-duration: 0.12s !important;
+    transition-timing-function: ease-out;
+  }
+</style>
