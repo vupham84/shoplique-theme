@@ -7,3 +7,4 @@ shopify.theme.toml
 !config/settings_schema.json
 !locales/*.default.json
 !locales/*.default.schema.json
+.env
